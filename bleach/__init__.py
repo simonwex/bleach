@@ -87,7 +87,8 @@ identity = lambda x: x  # The identity function.
 
 
 def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
-          styles=ALLOWED_STYLES, strip=False, strip_comments=True):
+          styles=ALLOWED_STYLES, strip=False, strip_comments=True,
+          parse_as_fragment=True):
     """Clean an HTML fragment and return it"""
     if not text:
         return u''
@@ -104,9 +105,11 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
         strip_html_comments = strip_comments
 
     parser = html5lib.HTMLParser(tokenizer=s)
-
-    return _render(parser.parseFragment(text)).strip()
-
+    
+    if parse_as_fragment:
+        return _render(parser.parseFragment(text)).strip()
+    else:
+        return _render(parser.parse(text)).strip()
 
 def linkify(text, nofollow=True, target=None, filter_url=identity,
             filter_text=identity, skip_pre=False, parse_email=False):

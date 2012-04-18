@@ -162,6 +162,15 @@ def test_wildcard_attributes():
     clean = u'both <em id="foo">can</em> have <img id="bar" src="foo">'
     eq_(clean, bleach.clean(dirty, tags=TAG, attributes=ATTR))
 
+def test_full_document():
+    dirty = (u'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Title of This Web Page</title></head><body><p>My first web page.</p></body></html>')
+    clean = (u'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Title of This Web Page</title></head><body><p>My first web page.</p></body></html>')
+    TAGS = ['doctype', 'html', 'head', 'meta', 'title', 'body', 'p']
+    ATTRS = {
+      'html':['lang'],
+      'meta':['charset'],
+    }
+    eq_(clean, bleach.clean(dirty, tags=TAGS, attributes=ATTRS, parse_as_fragment=False))
 
 def test_sarcasm():
     """Jokes should crash.<sarcasm/>"""
