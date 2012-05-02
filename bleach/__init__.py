@@ -111,8 +111,35 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
     else:
         return _render(parser.parse(text)).strip()
 
+def protect_search_score(text, parse_as_fragment=True):
+    text = force_unicode(text)
+
+    if not text:
+        return u''
+
+
+    parser = html5lib.HTMLParser()
+
+    # Parse as fragment or document
+    forest = parser.parseFragment(text) if parse_as_fragment else parser.parse(text)
+
+    def crawl_for_a_tags(tree, filter_url=identity):
+        for node in tree.childNodes:
+            if node.name == 'a':
+                if 'href' in node.attributes:
+                    node.attributes['rel'] = 'nofollow'
+                    href = node.attributes['href']
+                    node.attributes['href'] = filter_url(href)
+            else:
+                crawl_for_a_tags(node)
+
+    crawl_for_a_tags(forest)
+
+    return _render(forest)
+
+
 def linkify(text, nofollow=True, target=None, filter_url=identity,
-            filter_text=identity, skip_pre=False, parse_email=False):
+            filter_text=identity, skip_pre=False, parse_email=False, parse_as_fragment=True):
     """Convert URL-like strings in an HTML fragment to links.
 
     linkify() converts strings that look like URLs or domain names in a
