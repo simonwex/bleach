@@ -11,7 +11,6 @@ from html5lib.serializer.htmlserializer import HTMLSerializer
 from encoding import force_unicode
 from sanitizer import BleachSanitizer
 
-
 VERSION = (1, 1, 1)
 __version__ = '.'.join(map(str, VERSION))
 
@@ -118,25 +117,8 @@ def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
         strip_html_comments = strip_comments
 
     parser = html5lib.HTMLParser(tokenizer=s)
-    
-    if parse_as_fragment:
-        return _render(parser.parseFragment(text)).strip()
-    else:
-        return _render(parser.parse(text)).strip()
 
-def protect_search_score(text, parse_as_fragment=True):
-    text = force_unicode(text)
-
-    if not text:
-        return u''
-
-
-    parser = html5lib.HTMLParser()
-
-    # Parse as fragment or document
-    forest = parser.parseFragment(text) if parse_as_fragment else parser.parse(text)
-
-    def crawl_for_a_tags(tree, filter_url=identity):
+    def add_nofollow(tree, filter_url=identity):
         for node in tree.childNodes:
             if node.name == 'a':
                 if 'href' in node.attributes:
@@ -144,11 +126,14 @@ def protect_search_score(text, parse_as_fragment=True):
                     href = node.attributes['href']
                     node.attributes['href'] = filter_url(href)
             else:
-                crawl_for_a_tags(node)
+                add_nofollow(node)
 
-    crawl_for_a_tags(forest)
+    forest = parser.parseFragment(text) if parse_as_fragment else parser.parse(text)
 
-    return _render(forest)
+    if nofollow:
+        add_nofollow(forest)
+
+    return _render(forest).strip()
 
 
 def linkify(text, nofollow=True, target=None, filter_url=identity,
