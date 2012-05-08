@@ -34,6 +34,15 @@ ALLOWED_TAGS = [
     'ul',
 ]
 
+ALLOWED_BASE_FULL_DOCUMENT_TAGS = [
+    'DOCTYPE',
+    'body',
+    'html',
+    'head',
+]
+
+ALLOWED_FULL_DOCUMENT_TAGS = ALLOWED_BASE_FULL_DOCUMENT_TAGS + ALLOWED_TAGS
+
 ALLOWED_ATTRIBUTES = {
     'a': ['href', 'title'],
     'abbr': ['title'],
@@ -85,13 +94,17 @@ NODE_TEXT = 4  # The numeric ID of a text node in simpletree.
 
 identity = lambda x: x  # The identity function.
 
-
 def clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES,
           styles=ALLOWED_STYLES, strip=False, strip_comments=True,
-          parse_as_fragment=True):
-    """Clean an HTML fragment and return it"""
-    if not text:
+          parse_as_fragment=True, nofollow=False, filter_url=identity):
+    """Clean an HTML fragment or document and return it"""
+
+    if not text and parse_as_fragment:
         return u''
+
+    # Allow things like body tag in full documents by default
+    if not parse_as_fragment and tags == ALLOWED_TAGS:
+        tags = ALLOWED_FULL_DOCUMENT_TAGS
 
     text = force_unicode(text)
     if text.startswith(u'<!--'):
@@ -139,7 +152,7 @@ def protect_search_score(text, parse_as_fragment=True):
 
 
 def linkify(text, nofollow=True, target=None, filter_url=identity,
-            filter_text=identity, skip_pre=False, parse_email=False, parse_as_fragment=True):
+            filter_text=identity, skip_pre=False, parse_email=False):
     """Convert URL-like strings in an HTML fragment to links.
 
     linkify() converts strings that look like URLs or domain names in a
@@ -283,7 +296,6 @@ def linkify(text, nofollow=True, target=None, filter_url=identity,
 
     return _render(forest)
 
-
 def _render(tree):
     """Try rendering as HTML, then XML, then give up."""
     try:
@@ -295,7 +307,6 @@ def _render(tree):
         except Exception, e:
             log.error('XML: %r' % e, exc_info=sys.exc_info())
             return u''
-
 
 def _serialize(domtree):
     walker = html5lib.treewalkers.getTreeWalker('simpletree')
