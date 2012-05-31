@@ -94,6 +94,11 @@ def test_named_arguments():
 
         options={'attributes':ATTRS, 'nofollow':True})
 
+def test_attr_with_amp():
+    s = u'<a href="http://xx.com?wut=lol&param=true">xx.com</a>'
+    
+    eq_cleaning_for_frag_and_doc(s, s)
+
 def test_nofollow():
     eq_cleaning_for_frag_and_doc(
         u'<a href="http://xx.com" rel="nofollow">xx.com</a>',
